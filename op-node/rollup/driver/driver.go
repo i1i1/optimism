@@ -66,6 +66,10 @@ type L1Chain interface {
 
 type L2Chain interface {
 	engine.Engine
+
+	// For caching SystemConfig
+	SystemConfigByL2Payload(payload *eth.ExecutionPayload) (eth.SystemConfig, error)
+
 	L2BlockRefByLabel(ctx context.Context, label eth.BlockLabel) (eth.L2BlockRef, error)
 	L2BlockRefByHash(ctx context.Context, l2Hash common.Hash) (eth.L2BlockRef, error)
 	L2BlockRefByNumber(ctx context.Context, num uint64) (eth.L2BlockRef, error)
@@ -236,7 +240,7 @@ func NewDriver(
 	}
 	sys.Register("sync", syncDeriver, opts)
 
-	sys.Register("engine", engine.NewEngDeriver(log, driverCtx, cfg, metrics, ec), opts)
+	sys.Register("engine", engine.NewEngDeriver(log, driverCtx, cfg, metrics, ec, l2), opts)
 
 	schedDeriv := NewStepSchedulingDeriver(log)
 	sys.Register("step-scheduler", schedDeriv, opts)

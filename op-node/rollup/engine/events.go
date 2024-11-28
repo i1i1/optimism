@@ -316,6 +316,10 @@ func (ev CrossUpdateRequestEvent) String() string {
 	return "cross-update-request"
 }
 
+type SystemConfigL2Fetcher interface {
+	SystemConfigByL2Payload(payload *eth.ExecutionPayload) (eth.SystemConfig, error)
+}
+
 type EngDeriver struct {
 	metrics Metrics
 
@@ -324,12 +328,13 @@ type EngDeriver struct {
 	ec      *EngineController
 	ctx     context.Context
 	emitter event.Emitter
+	l2      SystemConfigL2Fetcher
 }
 
 var _ event.Deriver = (*EngDeriver)(nil)
 
 func NewEngDeriver(log log.Logger, ctx context.Context, cfg *rollup.Config,
-	metrics Metrics, ec *EngineController,
+	metrics Metrics, ec *EngineController, l2 SystemConfigL2Fetcher,
 ) *EngDeriver {
 	return &EngDeriver{
 		log:     log,
@@ -337,6 +342,7 @@ func NewEngDeriver(log log.Logger, ctx context.Context, cfg *rollup.Config,
 		ec:      ec,
 		ctx:     ctx,
 		metrics: metrics,
+		l2:      l2,
 	}
 }
 

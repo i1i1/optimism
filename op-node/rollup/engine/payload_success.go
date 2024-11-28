@@ -34,6 +34,9 @@ func (eq *EngDeriver) onPayloadSuccess(ev PayloadSuccessEvent) {
 		})
 	}
 
+	// Cache new system config, so that we won't query engine on next payload attributes
+	_, _ = eq.l2.SystemConfigByL2Payload(ev.Envelope.ExecutionPayload)
+
 	eq.emitter.Emit(TryUpdateEngineEvent{
 		BuildStarted:  ev.BuildStarted,
 		InsertStarted: ev.InsertStarted,

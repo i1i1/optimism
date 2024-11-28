@@ -13,11 +13,17 @@ import (
 	"github.com/ethereum-optimism/optimism/op-node/rollup/engine"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/event"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/sync"
+	"github.com/ethereum-optimism/optimism/op-service/eth"
 )
 
 type EndCondition interface {
 	Closing() bool
 	Result() error
+}
+
+type Engine interface {
+	engine.Engine
+	SystemConfigByL2Payload(payload *eth.ExecutionPayload) (eth.SystemConfig, error)
 }
 
 type Driver struct {
@@ -30,7 +36,7 @@ type Driver struct {
 }
 
 func NewDriver(logger log.Logger, cfg *rollup.Config, l1Source derive.L1Fetcher,
-	l1BlobsSource derive.L1BlobsFetcher, l2Source engine.Engine, targetBlockNum uint64) *Driver {
+	l1BlobsSource derive.L1BlobsFetcher, l2Source Engine, targetBlockNum uint64) *Driver {
 
 	d := &Driver{
 		logger: logger,
@@ -41,7 +47,7 @@ func NewDriver(logger log.Logger, cfg *rollup.Config, l1Source derive.L1Fetcher,
 	pipelineDeriver.AttachEmitter(d)
 
 	ec := engine.NewEngineController(l2Source, logger, metrics.NoopMetrics, cfg, &sync.Config{SyncMode: sync.CLSync}, d)
-	engineDeriv := engine.NewEngDeriver(logger, context.Background(), cfg, metrics.NoopMetrics, ec)
+	engineDeriv := engine.NewEngDeriver(logger, context.Background(), cfg, metrics.NoopMetrics, ec, l2Source)
 	engineDeriv.AttachEmitter(d)
 	syncCfg := &sync.Config{SyncMode: sync.CLSync}
 	engResetDeriv := engine.NewEngineResetDeriver(context.Background(), logger, cfg, l1Source, l2Source, syncCfg)
